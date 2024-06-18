@@ -8,9 +8,9 @@ if cfg.ym_id: client = Client(cfg.ym_id).init()
 else: client = Client()
 
 
-def get_current_track(local_track_name: str) -> Track or None:
+def get_current_track(local_track_name: str, local_track_artist: str) -> Track or None:
     try:
-        track = client.search(text=local_track_name, type_='track')
+        track = client.search(text=f'{local_track_name} {local_track_artist}', type_='track')
         track = track.tracks.results[0]
         track = Track(
             [artist.name for artist in track.artists],

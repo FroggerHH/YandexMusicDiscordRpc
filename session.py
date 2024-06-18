@@ -40,9 +40,10 @@ class Session:
     def update(self):
         title = utils.execute('playerctl -p ' + self.player_name + " metadata --format \"{{title}}\"")
         if not title: return
+        artists = utils.execute('playerctl -p ' + self.player_name + " metadata --format \"{{artist}}\"")
         position = int(float(utils.execute('playerctl -p ' + self.player_name + " position")))
 
-        track = get_current_track(title)
+        track = get_current_track(title, artists)
         if track is None: return
 
         discord_rpc.update_presence(
