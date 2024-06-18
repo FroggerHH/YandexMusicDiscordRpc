@@ -1,5 +1,7 @@
 import os
+
 debug_mode = False
+
 
 def execute(cmd: str) -> str:
     output = os.popen(cmd)
@@ -7,6 +9,7 @@ def execute(cmd: str) -> str:
     if debug_mode:
         print(">>" + out)
     return out
+
 
 def format_time(milliseconds):
     total_seconds = milliseconds // 1000

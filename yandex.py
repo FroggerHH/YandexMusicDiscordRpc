@@ -1,25 +1,28 @@
 from yandex_music import Client
-from cfg import ym_id
+
+import cfg
 from track import Track
 from utils import ms_to_sec
 
-client = Client(ym_id).init()
+if cfg.ym_id: client = Client(cfg.ym_id).init()
+else: client = Client()
 
-def get_current_track():
-    queues = client.queues_list()
 
-    # if len(queues) == 0: return None
-    # currentQueue = client.queue(queue_id=queues[0].id)
-    # currentTrack = currentQueue.get_current_track()
-    # aboutTrack = currentTrack.fetch_track()
+def get_current_track(local_track_name: str) -> Track or None:
+    try:
+        track = client.search(text=local_track_name, type_='track')
+        track = track.tracks.results[0]
+        track = Track(
+            [artist.name for artist in track.artists],
+            track.title,
+            "https://" + track.cover_uri.replace("%%", "1000x1000"),
+            f"https://music.yandex.ru/album/{track.albums[0].id}/track/{track.id}",
+            ms_to_sec(track.duration_ms),
+            track
+        )
+        return track
 
-    aboutTrack = client.users_likes_tracks()[0].fetch_track()
+    except Exception as e:
+        print("An error occurred: ", e)
 
-    return Track(
-        [artist.name for artist in aboutTrack.artists],
-        aboutTrack.title,
-        "https://" + aboutTrack.cover_uri.replace("%%", "1000x1000"),
-        f"https://music.yandex.ru/album/{aboutTrack.albums[0].id}/track/{aboutTrack.id}",
-        ms_to_sec(aboutTrack.duration_ms),
-        aboutTrack
-    )
+    return None
