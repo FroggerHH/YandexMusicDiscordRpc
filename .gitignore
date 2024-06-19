@@ -158,3 +158,4 @@ cython_debug/
 
 # Session
 discord_log.txt
+*.kate-swp

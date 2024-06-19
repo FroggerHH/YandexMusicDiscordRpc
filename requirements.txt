@@ -1,0 +1,3 @@
+yandex-music>=2.0.1
+discord-rpc.py>=1.3.0
+watchdog

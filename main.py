@@ -1,6 +1,5 @@
 import cfg
 from yandex_music.track.track import Track
-
 import utils
 from time import sleep, time
 import session

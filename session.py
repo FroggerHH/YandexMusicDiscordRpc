@@ -1,8 +1,9 @@
 import discord_rpc
 import time
-import cfg
+from cfg import config
 import utils
 from yandex import get_current_track
+from track import Track
 
 
 def on_disconnect(codeno, codemsg):
@@ -21,6 +22,9 @@ def shutdown():
 
 class Session:
     def __init__(self, player_name: str) -> None:
+        self.time_started = time.time()
+        self.cashed_track: Track or None = None
+        self.cashed_title = ''
         print("Opening session on player")
 
         callbacks = {'disconnected': on_disconnect, 'error': on_error}
@@ -34,26 +38,39 @@ class Session:
 
         while self.running:
             self.update()
-            time.sleep(cfg.sleep_time)
+            time.sleep(config.sleep_time)
         shutdown()
 
     def update(self):
         title = utils.execute('playerctl -p ' + self.player_name + " metadata --format \"{{title}}\"")
         if not title: return
-        artists = utils.execute('playerctl -p ' + self.player_name + " metadata --format \"{{artist}}\"")
         position = int(float(utils.execute('playerctl -p ' + self.player_name + " position")))
 
-        track = get_current_track(title, artists)
+        if self.cashed_title == title:
+            track = self.cashed_track
+        else:
+            artists = utils.execute('playerctl -p ' + self.player_name + " metadata --format \"{{artist}}\"")
+            track = get_current_track(title, artists)
+            self.time_started = time.time() - position
+
+        self.cashed_title = title
+        self.cashed_track = track
+
         if track is None: return
 
-        discord_rpc.update_presence(
-            **{
-                'details': f'{track.name}',
-                'state': progress_bar(position, track.duration_sec),
-                'large_image_key': track.preview,
-                'large_image_text': f'Исполнители: {", ".join(track.artists)} \n\nТрек: {track.name}',
-                'small_image_key': 'yandex-music',
-            })
+        args = dict(
+            details=f'{track.name}',
+            state=progress_bar(position, track.duration_sec),
+            large_image_key=track.preview,
+            large_image_text='' + (
+                f'Исполнители: {", ".join(track.artists)}' if config.show_artists_on_hover_large else '')
+                             + (f' Трек:{track.name}' if config.show_title_on_hover_large else ''),
+            small_image_key='yandex-music',
+            start_timestamp=self.time_started if config.show_time else 0,
+            end_timestamp=(self.time_started + track.duration_sec) if config.show_time else 0,
+        )
+
+        discord_rpc.update_presence(**args)
 
         # # Вывод дебаг информации о треке
         # print("Current track: " + track.name)
@@ -73,21 +90,14 @@ def progress_bar(elapsed_time, duration):
     progress_ratio = min(max(elapsed_time / duration, 0), 1)  # Прогресс от 0 до 1
 
     # Вычисляем количество символов для заполненной части прогресс-бара
-    total_length = 20  # Длина прогресс-бара без границ
-    filled_length = int(total_length * progress_ratio)
+    filled_length = int(config.bar_length * progress_ratio)
 
     # Формируем прогресс-бар
-    bar = '>' + '•' * filled_length + '-' * (total_length - filled_length) + '<'
+    bar = f'>' + '•' * filled_length + '-' * (config.bar_length - filled_length) + '<'
+    if config.show_time_on_bar:
+        bar = utils.format_time(elapsed_time) + bar + utils.format_time(duration)
 
     return bar
-
-
-def change_time(_time: str):
-    t1 = _time.split(":")
-    result = 0
-    for i in range(len(t1)):
-        result += int(t1[-(i + 1)]) * changeTimeDict[i]
-    return result
 
 
 changeTimeDict = {

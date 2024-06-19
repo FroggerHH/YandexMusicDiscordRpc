@@ -11,10 +11,9 @@ def execute(cmd: str) -> str:
     return out
 
 
-def format_time(milliseconds):
-    total_seconds = milliseconds // 1000
-    minutes = total_seconds // 60
-    seconds = total_seconds % 60
+def format_time(seconds):
+    minutes = seconds // 60
+    seconds = seconds % 60
     return f"{minutes:02d}:{seconds:02d}"
 
 

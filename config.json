@@ -1,0 +1,8 @@
+{
+  "sleep_time": 1,
+  "show_time": true,
+  "show_time_on_bar": false,
+  "bar_length": 25,
+  "show_artists_on_hover_large": true,
+  "show_title_on_hover_large": false
+}
